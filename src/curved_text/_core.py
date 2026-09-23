@@ -6,6 +6,7 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING, Any, NamedTuple
 
+import matplotlib as mpl
 import matplotlib.artist as martist
 import matplotlib.colors as mcolors
 import matplotlib.font_manager as font_manager
@@ -396,14 +397,19 @@ class _PlainGlyph(_OutlineSegment):
 
     def _outline_units(self) -> tuple[np.ndarray, np.ndarray]:
         prop = self.get_fontproperties()
-        key = (self.get_text(), hash(prop))
+        usetex = bool(mpl.rcParams.get("text.usetex", False))
+        key = (self.get_text(), hash(prop), usetex)
         if self._outline_cache is not None and self._outline_cache[0] == key:
             return self._outline_cache[1]
         text = self.get_text()
         if not text.strip():  # whitespace advances the cursor but draws nothing
             outline = (np.empty((0, 2)), np.empty(0, dtype=Path.code_type))
         else:
-            verts, codes = _text_to_path.get_text_path(prop, text, ismath=False)
+            ismath = "TeX" if usetex else False
+            try:
+                verts, codes = _text_to_path.get_text_path(prop, text, ismath=ismath)
+            except Exception:
+                verts, codes = _text_to_path.get_text_path(prop, text, ismath=False)
             outline = (np.asarray(verts, float),
                        np.asarray(codes, dtype=Path.code_type))
         self._outline_cache = (key, outline)
@@ -420,11 +426,20 @@ class _MathRun(_OutlineSegment):
 
     def _outline_units(self) -> tuple[np.ndarray, np.ndarray]:
         prop = self.get_fontproperties()
-        key = (self.get_text(), hash(prop))
+        usetex = bool(mpl.rcParams.get("text.usetex", False))
+        key = (self.get_text(), hash(prop), usetex)
         if self._outline_cache is not None and self._outline_cache[0] == key:
             return self._outline_cache[1]
-        glyph_info, glyph_map, rects = _text_to_path.get_glyphs_mathtext(
-            prop, self.get_text())
+        if usetex:
+            try:
+                glyph_info, glyph_map, rects = _text_to_path.get_glyphs_tex(
+                    prop, self.get_text())
+            except Exception:
+                glyph_info, glyph_map, rects = _text_to_path.get_glyphs_mathtext(
+                    prop, self.get_text())
+        else:
+            glyph_info, glyph_map, rects = _text_to_path.get_glyphs_mathtext(
+                prop, self.get_text())
         pieces = []
         for glyph_id, x_pen, y_pen, scale in glyph_info:
             outline_verts, outline_codes = glyph_map[glyph_id]
@@ -502,15 +517,15 @@ class CurvedText(mtext.Text):
     stroke there merges adjacent per-character glyphs, so ``box`` is the way to
     get solid coverage under plain text.
 
-    Mathtext is supported: each ``$...$`` run in ``text`` is laid out by
-    matplotlib's mathtext engine and bent continuously along the curve --
-    every glyph outline and rule box is mapped through the curve's arc-length
-    frame, so radicals, fractions, and sized delimiters stay connected at any
-    curvature. The run rides the same baseline as the surrounding plain glyphs, so
-    its main symbols sit level with them. Pass ``parse_math=False`` to treat
-    dollar signs literally. ``text.usetex`` is not supported. Tall expressions
-    compress vertically on the inside of tight bends, so choose label size
-    relative to curvature accordingly.
+    Mathtext and LaTeX are supported: each ``$...$`` run in ``text`` is laid out
+    by matplotlib's mathtext engine (or LaTeX when ``text.usetex`` is enabled)
+    and bent continuously along the curve -- every glyph outline and rule box is
+    mapped through the curve's arc-length frame, so radicals, fractions, and
+    sized delimiters stay connected at any curvature. The run rides the same
+    baseline as the surrounding plain glyphs, so its main symbols sit level with
+    them. Pass ``parse_math=False`` to treat dollar signs literally. Tall
+    expressions compress vertically on the inside of tight bends, so choose
+    label size relative to curvature accordingly.
 
     Both plain glyphs and mathtext runs are rendered from their glyph outlines
     rather than as hinted ``Text`` artists. On a rotated label this is what lets a

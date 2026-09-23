@@ -1005,3 +1005,34 @@ def test_crowding_curvature_is_negligible_on_a_gentle_bend():
     _draw(fig)
     assert _end_to_end(bent) == pytest.approx(_end_to_end(flat), rel=0.01)
     plt.close(fig)
+
+
+def _has_tex() -> bool:
+    import shutil
+    return bool(shutil.which("latex") and shutil.which("dvips"))
+
+
+def test_usetex_math_run_outline_units():
+    if not _has_tex():
+        pytest.skip("LaTeX not installed on system")
+    import matplotlib as mpl
+    with mpl.rc_context({"text.usetex": True}):
+        seg = _MathRun(r"$\bar{\sigma} = \bar{\sigma}_G$")
+        verts, codes = seg._outline_units()
+        assert len(verts) > 0
+        assert len(codes) == len(verts)
+
+
+def test_usetex_curved_text_draws():
+    if not _has_tex():
+        pytest.skip("LaTeX not installed on system")
+    import matplotlib as mpl
+    with mpl.rc_context({"text.usetex": True}):
+        fig, ax = plt.subplots()
+        x = np.linspace(0, 1, 50)
+        ct = curved_text(ax, x, np.sin(x), r"$\bar{\sigma} = \bar{\sigma}_c$", pos=0.5)
+        _draw(fig)
+        assert len(ct._segments) == 1
+        assert ct._segments[0].get_visible()
+        plt.close(fig)
+
