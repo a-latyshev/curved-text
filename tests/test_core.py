@@ -1024,6 +1024,9 @@ def _flat_label(text, fontsize=16, **kwargs):
     fig, ax = plt.subplots()
     ax.set_xlim(0, 10)
     ax.set_ylim(0, 10)
+    # Under the text.usetex rcParam the tick labels would be usetex too, and
+    # Agg rasterizes those through dvipng, which curved-text itself never needs.
+    ax.set_axis_off()
     x = np.linspace(0, 10, 100)
     ct = curved_text(ax, x, np.full_like(x, 5.0), text, pos=0.5,
                      anchor="center", fontsize=fontsize, **kwargs)
