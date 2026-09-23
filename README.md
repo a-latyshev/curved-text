@@ -138,10 +138,25 @@ curved_text(ax, x, y, r"yield 50% at $\sqrt{\bar{\sigma}_G}$", usetex=True)
 Plain text is typeset literally, one character at a time: `%`, `#`, `&`, and
 the other TeX markup characters print as themselves, and TeX commands work only
 inside `$...$`. This differs from matplotlib's own usetex text, where
-`r"50\%"` is needed for a percent sign. Plain text is limited to characters the
-LaTeX preamble can typeset, so put Greek letters in math runs (`$\lambda$`). The
-first draw runs LaTeX once for each distinct character and math run, which can
-take several seconds; later draws are cached.
+`r"50\%"` is needed for a percent sign. The first draw runs LaTeX once for each
+distinct character and math run, which can take several seconds; later draws
+are cached.
+
+Plain text is limited to characters the LaTeX preamble can typeset. A Greek
+letter in a math run (`$\lambda$`) is italic, as a variable should be. For an
+upright Greek letter in plain text, such as a name or a unit, declare it in your
+own preamble, one declaration per letter:
+
+```python
+mpl.rcParams["text.latex.preamble"] = (
+    r"\usepackage{upgreek}"
+    r"\DeclareUnicodeCharacter{03BB}{\ensuremath{\uplambda}}"
+)
+curved_text(ax, x, y, r"plain λ, math $\lambda$", usetex=True)
+```
+
+The library leaves the preamble to you. It is one global setting for every
+usetex text in the figure, including the layout passes that measure the label.
 
 ### Casing behind the label
 

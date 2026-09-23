@@ -583,8 +583,8 @@ class CurvedText(mtext.Text):
     then typeset by LaTeX, and so is plain text, one literal character at a time:
     characters that are TeX markup (such as ``%``, ``#``, and the backslash) are
     escaped, so TeX commands work only inside ``$...$``. Plain text is limited to
-    characters the LaTeX preamble can typeset, so a Greek letter belongs in a
-    math run. The ``valign`` datum comes from the matplotlib
+    characters the LaTeX preamble can typeset; the README shows how to declare
+    upright Greek letters there. The ``valign`` datum comes from the matplotlib
     font's metrics, so alignments other than ``"baseline"`` are approximate under
     LaTeX. The first draw runs LaTeX once for each distinct character and math
     run, which can take seconds; later draws reuse matplotlib's cache.

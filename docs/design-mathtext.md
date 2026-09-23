@@ -222,9 +222,16 @@ reads on top.
   commands work only inside `$...$`. This differs from matplotlib's own usetex
   `Text`, which passes the whole string to TeX.
 - Under `usetex`, plain text is limited to characters the LaTeX preamble can
-  typeset. A Greek letter in plain text is a LaTeX error; it belongs in a math
-  run. A straight `"` typesets as a closing curly quote, as it does in
-  matplotlib's own usetex text.
+  typeset. By default a Greek letter in plain text is a LaTeX error, as it is in
+  matplotlib's own usetex text. Math-run Greek (`$\lambda$`) is italic, the
+  convention for variables; plain Greek, like the rest of plain text, should be
+  upright, and lowercase upright Greek needs a LaTeX package. The README gives
+  a preamble recipe (`upgreek` plus `\DeclareUnicodeCharacter`). The library
+  does not load packages itself: the preamble is one global rcParam that also
+  governs layout passes outside the library's draw, so injecting a package only
+  during its own draws would measure and draw with different preambles, and
+  setting it globally would change the user's other usetex text. A straight `"`
+  typesets as a closing curly quote, as it does in matplotlib's own usetex text.
 - Tall constructs degrade by vertical compression on the inside of bends;
   the docstring states this and leaves label-size-to-curvature judgment to the
   user.
